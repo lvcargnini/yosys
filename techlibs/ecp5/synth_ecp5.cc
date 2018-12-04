@@ -203,7 +203,7 @@ struct SynthEcp5Pass : public ScriptPass
 	{
 		if (check_label("begin"))
 		{
-			run("read_verilog -lib +/ecp5/cells_sim.v");
+			run("read_verilog -lib +/ecp5/cells_sim.v +/ecp5/cells_bb.v");
 			run(stringf("hierarchy -check %s", help_mode ? "-top <top>" : top_opt.c_str()));
 		}
 
@@ -266,10 +266,7 @@ struct SynthEcp5Pass : public ScriptPass
 			if (abc2 || help_mode) {
 				run("abc", "      (only if -abc2)");
 			}
-			//TODO
-#if 0
 			run("techmap -map +/ecp5/latches_map.v");
-#endif
 			if (nomux)
 				run("abc -lut 4");
 			else

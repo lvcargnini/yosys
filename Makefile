@@ -109,7 +109,7 @@ OBJS = kernel/version_$(GIT_REV).o
 # is just a symlink to your actual ABC working directory, as 'make mrproper'
 # will remove the 'abc' directory and you do not want to accidentally
 # delete your work on ABC..
-ABCREV = c5b48bb
+ABCREV = 2ddc57d
 ABCPULL = 1
 ABCURL ?= https://github.com/berkeley-abc/abc
 ABCMKARGS = CC="$(CXX)" CXX="$(CXX)" ABC_USE_LIBSTDCXX=1
@@ -359,7 +359,11 @@ ifeq ($(ENABLE_VERIFIC),1)
 VERIFIC_DIR ?= /usr/local/src/verific_lib_eval
 VERIFIC_COMPONENTS ?= verilog vhdl database util containers sdf hier_tree
 CXXFLAGS += $(patsubst %,-I$(VERIFIC_DIR)/%,$(VERIFIC_COMPONENTS)) -DYOSYS_ENABLE_VERIFIC
+ifeq ($(OS), Darwin)
+LDLIBS += $(patsubst %,$(VERIFIC_DIR)/%/*-mac.a,$(VERIFIC_COMPONENTS)) -lz
+else
 LDLIBS += $(patsubst %,$(VERIFIC_DIR)/%/*-linux.a,$(VERIFIC_COMPONENTS)) -lz
+endif
 endif
 
 ifeq ($(ENABLE_PROTOBUF),1)
@@ -573,6 +577,7 @@ test: $(TARGETS) $(EXTRA_TARGETS)
 	+cd tests/bram && bash run-test.sh $(SEEDOPT)
 	+cd tests/various && bash run-test.sh
 	+cd tests/sat && bash run-test.sh
+	+cd tests/svinterfaces && bash run-test.sh $(SEEDOPT)
 	@echo ""
 	@echo "  Passed \"make test\"."
 	@echo ""
@@ -594,7 +599,7 @@ vloghtb: $(TARGETS) $(EXTRA_TARGETS)
 ystests: $(TARGETS) $(EXTRA_TARGETS)
 	rm -rf tests/ystests
 	git clone https://github.com/YosysHQ/yosys-tests.git tests/ystests
-	+PATH="$$PWD:$$PATH" cd tests/ystests && $(MAKE)
+	+$(MAKE) PATH="$$PWD:$$PATH" -C tests/ystests
 	@echo ""
 	@echo "  Finished \"make ystests\"."
 	@echo ""
@@ -655,6 +660,7 @@ clean:
 	rm -rf tests/sat/*.log tests/techmap/*.log tests/various/*.log
 	rm -rf tests/bram/temp tests/fsm/temp tests/realmath/temp tests/share/temp tests/smv/temp
 	rm -rf vloghtb/Makefile vloghtb/refdat vloghtb/rtl vloghtb/scripts vloghtb/spec vloghtb/check_yosys vloghtb/vloghammer_tb.tar.bz2 vloghtb/temp vloghtb/log_test_*
+	rm -f tests/svinterfaces/*.log_stdout tests/svinterfaces/*.log_stderr tests/svinterfaces/dut_result.txt tests/svinterfaces/reference_result.txt tests/svinterfaces/a.out tests/svinterfaces/*_syn.v tests/svinterfaces/*.diff
 	rm -f  tests/tools/cmp_tbdata
 
 clean-abc:
